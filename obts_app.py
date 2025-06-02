@@ -150,7 +150,7 @@ agrupado['Valor OBT format'] = f"{valor_chart3:,.2f}".replace(",", "X").replace(
 chart3 = alt.Chart(agrupado).mark_bar().encode(
     x=alt.X("Valor OBT Num:Q"),
     y=alt.Y("Descrição do Item:N", sort='-x'),
-    tooltip=["Descrição do Item", "Valor OBT format"]
+    tooltip=["Descrição do Item", "Valor OBT Num"]
 ).properties(
     width=700,
     height=400
