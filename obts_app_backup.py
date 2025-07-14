@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from streamlit.runtime.scriptrunner import get_script_run_ctx
+import numpy as np
 
 st.markdown("""
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
@@ -26,16 +27,20 @@ st.logo('logo-cesf-e-cegov.png')
 todas_regioes = df_obts['Região de Planejamento'].unique()
 todas_ugs = df_obts['UG'].unique()
 todos_items = df_obts['Descrição do Item\n'].unique()
+todos_municipios = df_obts['Municipio_upp'].unique()
+municipios_sem_nan = [m for m in todos_municipios if isinstance(m, str)]
+municipios_ordenados = sorted(municipios_sem_nan)
 
 # Estado inicial dos filtros
 regiao = st.sidebar.selectbox("Região de Planejamento", todas_regioes, index=None, placeholder="Escolha...")
+municipios = st.sidebar.selectbox('Município: ', municipios_ordenados, index=None, placeholder="Escolha...")
 df_ugs = df_obts[df_obts['Região de Planejamento'] == regiao]
+df_ugs_mun = df_obts[df_obts['Municipio_upp'] == municipios]
 ugs = df_ugs['UG'].unique()
 ug = st.sidebar.selectbox('UG:', ugs, index=None, placeholder="Escolha...")
 df_items = df_obts[(df_obts["UG"] == ug) & (df_obts["Região de Planejamento"] == regiao)]
 items = df_items["Descrição do Item\n"].unique()
 item = st.sidebar.selectbox('Item:', items, index=None, placeholder="Escolha...")
-
 
 
 df_obts_regioes_group_regiao_ug = round(df_obts.groupby(['Região de Planejamento', 'UG'])['Valor OBT']\
