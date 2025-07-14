@@ -48,7 +48,7 @@ st.divider()
 #         st.stop() # Interrompe a execução do Streamlit
 
 # Carrega os dados e armazena em cache para performance
-df_obts = pd.read_csv('obts_final_2023_maio_2025_2.csv', sep=';')
+df_obts = pd.read_csv('obts_final_2023_maio_2025_3.csv', sep=';')
 
 # Exibe mensagem e interrompe se o DataFrame estiver vazio após o carregamento
 if df_obts.empty:
@@ -104,6 +104,7 @@ todas_regioes = df_obts['Região de Planejamento'].unique()
 todas_ugs = df_obts['Convenente'].unique()
 todos_items = df_obts['Descrição do Item'].unique()
 todos_municipios = df_obts['Municipio_upp'].unique()
+todos_lotes = df_obts['Nº LOTE'].unique()
 
 # Filtra e ordena municípios, removendo valores NaN e garantindo que são strings
 municipios_sem_nan = [m for m in todos_municipios if isinstance(m, str) and pd.notna(m)]
@@ -115,6 +116,8 @@ municipios_ordenados = sorted(municipios_sem_nan)
 # Isso é crucial para filtros encadeados e para evitar reruns desnecessários
 if 'regiao_selecionada' not in st.session_state:
     st.session_state.regiao_selecionada = None
+if 'lote_selecionado' not in st.session_state:
+    st.session_state.lote_selecionado = None
 if 'municipio_selecionado' not in st.session_state:
     st.session_state.municipio_selecionado = None
 if 'ug_selecionada' not in st.session_state:
@@ -132,15 +135,39 @@ regiao = st.sidebar.selectbox(
     on_change=lambda: st.session_state.update(municipio_selecionado=None, ug_selecionada=None, item_selecionado=None)
 )
 
+
+
 # Atualiza o estado da sessão se a região mudar
 if regiao != st.session_state.regiao_selecionada:
     st.session_state.regiao_selecionada = regiao
     # st.experimental_rerun() # Removido para evitar reruns excessivos com on_change
 
+
 # Filtra o DataFrame base para os filtros dependentes
+
 df_para_filtros = df_obts.copy()
 if regiao:
     df_para_filtros = df_para_filtros[df_para_filtros['Região de Planejamento'] == regiao]
+
+# Selectbox para Lotes
+lotes_disponiveis = sorted([m for m in df_para_filtros['Nº LOTE'].unique() if isinstance(m, str) and pd.notna(m)])
+lote = st.sidebar.selectbox(
+    "Lote", 
+    lotes_disponiveis, 
+    index=None, 
+    placeholder="Escolha...",
+    key='lote_filtro',
+    on_change=lambda: st.session_state.update(municipio_selecionado=None, ug_selecionada=None, item_selecionado=None)
+)
+
+# Atualiza o estado da sessão se o lote mudar
+if lote != st.session_state.lote_selecionado:
+    st.session_state.lote_selecionado = lote
+    # st.experimental_rerun() # Removido para evitar reruns excessivos com on_change
+
+# Filtra o DataFrame para UGs
+if lote:
+    df_para_filtros = df_para_filtros[df_para_filtros['Nº LOTE'] == lote]
 
 # Selectbox para Município
 municipios_disponiveis = sorted([m for m in df_para_filtros['Municipio_upp'].unique() if isinstance(m, str) and pd.notna(m)])
@@ -204,6 +231,8 @@ df_visualizacao = df_obts.copy()
 
 if regiao:
     df_visualizacao = df_visualizacao[df_visualizacao['Região de Planejamento'] == regiao]
+if lote:
+    df_visualizacao = df_visualizacao[df_visualizacao['Nº LOTE'] == lote]
 if municipios:
     df_visualizacao = df_visualizacao[df_visualizacao['Municipio_upp'] == municipios]
 if ug:
