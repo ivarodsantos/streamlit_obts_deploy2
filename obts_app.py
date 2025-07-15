@@ -49,6 +49,7 @@ st.divider()
 
 # Carrega os dados e armazena em cache para performance
 df_obts = pd.read_csv('obts_final_2023_maio_2025_3.csv', sep=';')
+df_coops = pd.read_csv('rel_cooperativa_csf_lotes.csv')
 
 # Exibe mensagem e interrompe se o DataFrame estiver vazio após o carregamento
 if df_obts.empty:
@@ -228,13 +229,17 @@ if item != st.session_state.item_selecionado:
 # DataFrame base para os gráficos, filtrado pelas seleções do usuário
 # Usamos o DataFrame original e aplicamos os filtros em cascata
 df_visualizacao = df_obts.copy()
+df_visualizacao_coops = df_coops.copy()
 
 if regiao:
     df_visualizacao = df_visualizacao[df_visualizacao['Região de Planejamento'] == regiao]
+    df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['Região de Planejamento'] == regiao]
 if lote:
     df_visualizacao = df_visualizacao[df_visualizacao['Nº LOTE'] == lote]
+    df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['Nº LOTE'] == lote]
 if municipios:
     df_visualizacao = df_visualizacao[df_visualizacao['Municipio_upp'] == municipios]
+    df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['Municipio_upp'] == municipios]
 if ug:
     df_visualizacao = df_visualizacao[df_visualizacao['Convenente'] == ug]
 if item:
@@ -249,12 +254,22 @@ if df_visualizacao.empty:
 
 # Agrupa por Região e UG para o cálculo do valor total da região selecionada
 df_agrupado_regiao_ug = group_and_format_data(df_visualizacao, ['Região de Planejamento', 'Convenente'])
+df_agrupado_regiao_ug_coops = group_and_format_data(df_visualizacao_coops, ['Região de Planejamento', 'Convenente'])
 
 valor_total_regiao = df_agrupado_regiao_ug['Valor OBT Num'].sum()
 valor_total_regiao_formatado = format_currency(valor_total_regiao)
+valor_total_regiao_coops = df_agrupado_regiao_ug_coops['Valor OBT Num'].sum()
+valor_total_regiao_coops_formatado = format_currency(valor_total_regiao_coops)
 
-# Exibe a métrica do valor total investido na região
-st.metric(label="Total Investido na Região de Planejamento", value=valor_total_regiao_formatado)
+# Divide o layout em duas colunas para as métricas
+col1, col2 = st.columns(2)
+with col1:
+    # Exibe a métrica do valor total investido na região
+    st.metric(label="Total Investido na Região de Planejamento", value=valor_total_regiao_formatado)
+with col2:
+    # Exibe a métrica do valor total investido na região
+    st.metric(label="Total de compras em Cooperativas na Região de Planejamento", value=valor_total_regiao_coops_formatado)
+
 if regiao:
     st.markdown(f"<b style='color:red'>{regiao}</b>", unsafe_allow_html=True)
 st.divider()
@@ -262,9 +277,9 @@ st.divider()
 # --- Visualizações --- #
 
 # Divide o layout em duas colunas para os gráficos
-col1, col2 = st.columns(2)
+col3, col4 = st.columns(2)
 
-with col1:
+with col3:
     st.markdown(f"<h5>UGs que compraram na Região de Planejamento <b style='color:red'>{regiao if regiao else 'selecionada'}</b></h5>", unsafe_allow_html=True)
     
     # Cria o gráfico de barras para UGs
@@ -277,7 +292,7 @@ with col1:
     )
     st.altair_chart(chart_ug_compras, use_container_width=True)
 
-with col2:
+with col4:
     st.markdown(f"<h5>A UG <b style='color:red'>{ug if ug else 'selecionada'}</b> comprou nos seguintes fornecedores em <b style='color:red'>{regiao if regiao else 'região selecionada'}</b></h5>", unsafe_allow_html=True)
     
     # Agrupa dados por Fornecedor para o gráfico
