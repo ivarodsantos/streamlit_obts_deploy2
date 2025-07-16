@@ -254,7 +254,7 @@ with col2:
         st.info('Aguardando você escolher um lote', icon="🤔")
     else:
         
-        st.metric(label="Total de transações efetivadas através do Cartão CSF no Município", value=valor_total_lote_formatado)
+        st.metric(label="Total de transações efetivadas através do Cartão CSF no Lote", value=valor_total_lote_formatado)
         
         st.markdown(f"<b style='color:red'>{lote}</b>", unsafe_allow_html=True)
 with col3:
@@ -284,7 +284,7 @@ with col5:
         st.info('Aguardando você escolher um lote', icon="🤔")
     else:
         
-        st.metric(label="Total de estabelecimentos credenciados no Município", value=valor_total_lote_rede)
+        st.metric(label="Total de estabelecimentos credenciados no Lote", value=valor_total_lote_rede)
         
         st.markdown(f"<b style='color:red'>{lote}</b>", unsafe_allow_html=True)
 with col6:
@@ -312,7 +312,7 @@ with col8:
         st.info('Aguardando você escolher um lote', icon="🤔")
     else:
         
-        st.metric(label="Total de beneficiários no Município", value=valor_total_lote_benefs)
+        st.metric(label="Total de beneficiários no Lote", value=valor_total_lote_benefs)
         
         st.markdown(f"<b style='color:red'>{lote}</b>", unsafe_allow_html=True)
 with col9:
