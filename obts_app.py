@@ -20,7 +20,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal da aplicação
-st.markdown("# Compras efetuadas pelas UGs - Ordem Bancária de Transações(OBTs) :clipboard:")
+st.title("Análise de Compras das UGs via OBTs(Ordem Bancária de Transações) :clipboard:")
+# st.markdown("# Compras efetuadas pelas UGs - Ordem Bancária de Transações(OBTs) :clipboard:")
 st.divider()
 
 # --- Carregamento e Pré-processamento de Dados --- #
@@ -342,7 +343,7 @@ with col3:
     else:
         st.metric(label="Total Investido no Município", value=valor_total_regiao_lote_municipio_formatado)
         st.markdown(f"<b style='color:red'>{municipios}</b>", unsafe_allow_html=True)
-with col2:
+with col4:
     # Exibe a métrica do valor total investido na região
     st.metric(label=label_coop, value=valor_total_regiao_coops_formatado)
 st.divider()
