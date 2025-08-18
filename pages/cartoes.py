@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+from pathlib import Path
 # import numpy as np
 
 # --- Configuração da Página e Estilo --- #
@@ -59,30 +60,51 @@ def create_altair_bar_chart(dataframe, x_col, y_col, title, tooltip_cols):
     ).interactive() # Permite zoom e pan
     return chart
 
-# Título principal da aplicação
-st.markdown("# Cartões CSF :credit_card:")
+
+col10, col11 = st.columns([1, 8], gap="small", vertical_alignment ="bottom")
+with col10:
+    st.header("Cartões CSF")
+with col11:
+    st.image("static/card_icon.png", width=60)
+
 st.markdown("## Transações 🤝")
 st.divider()
 
 ###################
 # 1. Carregar dados
 ###################
-df_transacoes = pd.read_csv('transacoes_2023_junho2025_agrupado_municipios_regioes.csv', encoding='latin-1')
-df_rede = pd.read_csv('df_rede_credenciada_first.csv')
-df_rede_mun_regiao = pd.read_csv('qtd_estabelecimentos_credenciados_agrupado_por_municipio_regiao - qtd_estabelecimentos_credenciados_agrupado_por_municipio_regiao.csv')
+df_transacoes = pd.read_csv('transacoes_2023_julho2025_agrupado_municipios_regioes.csv', encoding='latin-1')
+# df_rede = pd.read_csv('df_rede_credenciada_first.csv')
+df_rede_mun_regiao = pd.read_csv('qtd_estabelecimentos_credenciados_agrupado_por_municipio_regiao_julho.csv', encoding='latin-1')
 df_lotes = pd.read_csv('lotes_municipios.csv')
-df_benefs_cartao = pd.read_csv('beneficiarios_cartao_junho25.csv')
+df_benefs_cartao = pd.read_csv('cartao_csf_julho_2025_resumo.csv')
 df_municipios_regioes= pd.read_csv('municipios_regioes.csv')
+
+
+
+# --- Pré-processamento dos Dados --- #
+
+df_lotes.rename(columns={'Nº LOTE': 'Lote', 
+                         'Município': 'Nome Municipio'}, inplace=True)
+df_lotes.drop(columns=['Unnamed: 0'], inplace=True)
 
 
 df_merge_rede_mun_regiao_lotes = pd.merge(df_rede_mun_regiao, df_lotes, on='mun_upp', how='left')
 df_merge_transacoes_lotes = pd.merge(df_transacoes, df_lotes, on='mun_upp', how='left')
-df_merge_benefs_cartao_lotes = pd.merge(df_benefs_cartao, df_lotes, on='mun_upp', how='left')
-df_merge_benefs_cartao_lotes_regioes = pd.merge(df_merge_benefs_cartao_lotes, df_municipios_regioes, on='mun_upp', how='left')
-df_simp_benefs_cartao_lotes_regioes = df_merge_benefs_cartao_lotes_regioes[[
-    'Nome do município', 'mun_upp', 'total_inclusao', 'Nº LOTE', 'Região de Planejamento'
-]]
-df_simp_benefs_cartao_lotes_regioes['total_inclusao'] = df_simp_benefs_cartao_lotes_regioes['total_inclusao'].astype(int)
+df_merge_benefs_cartao_lotes_regioes = pd.merge(df_benefs_cartao, df_lotes, on='mun_upp', how='left')
+# df_merge_benefs_cartao_lotes_regioes = pd.merge(df_merge_benefs_cartao_lotes, df_municipios_regioes, on='mun_upp', how='left')
+
+# df_merge_benefs_cartao_lotes_regioes.rename(columns={'Município_x': 'Municipio', 
+#                                                      'Região de Planejamento': 'Região de Planejamento', 
+#                                                      'Nº LOTE': 'Lote'}, 
+#                                             inplace=True)
+
+# df_merge_benefs_cartao_lotes_regioes.drop(columns=['Município_y', 'Unnamed: 0'], inplace=True)
+
+# df_merge_benefs_cartao_lotes_regioes = \
+#     df_merge_benefs_cartao_lotes_regioes[['Municipio', 'Total', 'mun_upp', 'Lote', 'Região de Planejamento']].reset_index(drop=True)
+# df_merge_benefs_cartao_lotes_regioes['Total'] = df_merge_benefs_cartao_lotes_regioes['Total'].astype(int)
+# print(repr(list(df_merge_benefs_cartao_lotes_regioes.columns)))
 
 # --- Layout e Logo --- #
 st.logo('logo-cesf-e-cegov.png')
@@ -93,7 +115,7 @@ st.logo('logo-cesf-e-cegov.png')
 # Coleta todas as opções únicas das colunas relevantes para os filtros
 todas_regioes = df_merge_transacoes_lotes['Região de Planejamento'].unique()
 todos_municipios = df_merge_transacoes_lotes['mun_upp'].unique()
-todos_lotes = df_merge_rede_mun_regiao_lotes['Nº LOTE'].unique()
+todos_lotes = df_merge_rede_mun_regiao_lotes['Lote'].unique()
 
 
 # --- Estado Inicial e Lógica dos Filtros na Barra Lateral --- #
@@ -134,7 +156,7 @@ if regiao:
     df_para_filtros = df_para_filtros[df_para_filtros['Região de Planejamento'] == regiao]
     
 # Selectbox para Lotes
-lotes_disponiveis = sorted([m for m in df_para_filtros['Nº LOTE'].unique() if isinstance(m, str) and pd.notna(m)])
+lotes_disponiveis = sorted([m for m in df_para_filtros['Lote'].unique() if isinstance(m, str) and pd.notna(m)])
 lote = st.sidebar.selectbox(
     "Lote", 
     lotes_disponiveis, 
@@ -151,7 +173,7 @@ if lote != st.session_state.lote_selecionado:
 
 # Filtra o DataFrame para UGs
 if lote:
-    df_para_filtros = df_para_filtros[df_para_filtros['Nº LOTE'] == lote]
+    df_para_filtros = df_para_filtros[df_para_filtros['Lote'] == lote]
     
 # Selectbox para Município
 municipios_disponiveis = sorted([m for m in df_para_filtros['mun_upp'].unique() if isinstance(m, str) and pd.notna(m)])
@@ -180,18 +202,19 @@ df_visualizacao_lote_transacoes = df_merge_transacoes_lotes.copy()
 df_visualizacao_municipios_transacoes = df_merge_transacoes_lotes.copy()
 df_visualizacao_rede = df_merge_rede_mun_regiao_lotes.copy()
 df_visualizacao_municipios_rede = df_merge_rede_mun_regiao_lotes.copy()
-df_visualizacao_benefs_cartao = df_simp_benefs_cartao_lotes_regioes.copy()
-df_visualizacao_lote_benefs_cartao = df_simp_benefs_cartao_lotes_regioes.copy()
-df_visualizacao_municipio_benefs_cartao = df_simp_benefs_cartao_lotes_regioes.copy()
+df_visualizacao_benefs_cartao = df_merge_benefs_cartao_lotes_regioes.copy()
+df_visualizacao_lote_benefs_cartao = df_merge_benefs_cartao_lotes_regioes.copy()
+df_visualizacao_municipio_benefs_cartao = df_merge_benefs_cartao_lotes_regioes.copy()
+
 
 if regiao:
     df_visualizacao_transacoes = df_visualizacao_transacoes[df_visualizacao_transacoes['Região de Planejamento'] == regiao]
     df_visualizacao_rede = df_visualizacao_rede[df_visualizacao_rede['Região de Planejamento'] == regiao]
-    df_visualizacao_benefs_cartao = df_visualizacao_benefs_cartao[df_visualizacao_benefs_cartao['Região de Planejamento'] == regiao]
+    df_visualizacao_benefs_cartao = df_visualizacao_benefs_cartao[df_visualizacao_benefs_cartao['Região de Planejamento'] == regiao.upper() if isinstance(regiao, str) else regiao]
 if lote:
-    df_visualizacao_lote_transacoes = df_visualizacao_lote_transacoes[df_visualizacao_lote_transacoes['Nº LOTE'] == lote]
-    df_visualizacao_lote_rede = df_visualizacao_municipios_rede[df_visualizacao_municipios_rede['Nº LOTE'] == lote]
-    df_visualizacao_lote_benefs_cartao = df_visualizacao_lote_benefs_cartao[df_visualizacao_lote_benefs_cartao['Nº LOTE'] == lote]
+    df_visualizacao_lote_transacoes = df_visualizacao_lote_transacoes[df_visualizacao_lote_transacoes['Lote'] == lote]
+    df_visualizacao_lote_rede = df_visualizacao_municipios_rede[df_visualizacao_municipios_rede['Lote'] == lote]
+    df_visualizacao_lote_benefs_cartao = df_visualizacao_lote_benefs_cartao[df_visualizacao_lote_benefs_cartao['Lote'] == lote]
 # Aplica filtro de município
 if municipios:
     df_visualizacao_municipios_transacoes = df_visualizacao_municipios_transacoes[df_visualizacao_municipios_transacoes['mun_upp'] == municipios]
@@ -214,13 +237,21 @@ if df_visualizacao_transacoes.empty:
 
 # Agrupa por Região e UG para o cálculo do valor total da região selecionada
 df_agrupado_regiao_transacoes = group_and_format_data(df_visualizacao_transacoes, ['Região de Planejamento'])
-df_agrupado_lote_transacoes = group_and_format_data(df_visualizacao_lote_transacoes, ['Nº LOTE'])
+df_agrupado_lote_transacoes = group_and_format_data(df_visualizacao_lote_transacoes, ['Lote'])
 df_agrupado_municipio_transacoes = group_and_format_data(df_visualizacao_municipios_transacoes, ['mun_upp'])
 df_agrupado_regiao_rede = df_visualizacao_rede[df_visualizacao_rede['Região de Planejamento']==regiao]
-df_agrupado_lote_rede = df_visualizacao_rede[df_visualizacao_rede['Nº LOTE']==lote]
+df_agrupado_lote_rede = df_visualizacao_rede[df_visualizacao_rede['Lote']==lote]
 df_agrupado_municipios_rede = df_visualizacao_municipios_rede[df_visualizacao_municipios_rede['mun_upp']==municipios]
-df_agrupado_regiao_benefs = df_visualizacao_benefs_cartao[df_visualizacao_benefs_cartao['Região de Planejamento']==regiao]
-df_agrupado_lote_benefs = df_visualizacao_lote_benefs_cartao[df_visualizacao_lote_benefs_cartao['Nº LOTE']==lote]
+
+if regiao:
+    df_agrupado_regiao_benefs = df_visualizacao_benefs_cartao[
+        df_visualizacao_benefs_cartao['Região de Planejamento'] == regiao.upper()
+    ]
+    valor_total_regiao_benefs = df_agrupado_regiao_benefs['Total'].sum().astype(int)
+
+
+# df_agrupado_regiao_benefs = df_visualizacao_benefs_cartao[df_visualizacao_benefs_cartao['Região de Planejamento']==regiao.upper()]
+df_agrupado_lote_benefs = df_visualizacao_lote_benefs_cartao[df_visualizacao_lote_benefs_cartao['Lote']==lote]
 df_agrupado_municipios_benefs = df_visualizacao_municipio_benefs_cartao[df_visualizacao_municipio_benefs_cartao['mun_upp']==municipios]
 
 
@@ -230,12 +261,12 @@ valor_total_lote = df_agrupado_lote_transacoes['valor Num'].sum()
 valor_total_lote_formatado = format_currency(valor_total_lote)
 valor_total_municipio = df_agrupado_municipio_transacoes['valor Num'].sum()
 valor_total_municipio_formatado = format_currency(valor_total_municipio)
-valor_total_regiao_rede = df_agrupado_regiao_rede['qtd_estabelecimentos'].sum()
-valor_total_municipios_rede = df_agrupado_municipios_rede['qtd_estabelecimentos'].sum()
-valor_total_lote_rede = df_agrupado_lote_rede['qtd_estabelecimentos'].sum()
-valor_total_regiao_benefs = df_agrupado_regiao_benefs['total_inclusao'].sum()
-valor_total_municipios_benefs = df_agrupado_municipios_benefs['total_inclusao'].sum()
-valor_total_lote_benefs = df_agrupado_lote_benefs['total_inclusao'].sum()
+valor_total_regiao_rede = df_agrupado_regiao_rede['qtd_credenciados'].sum()
+valor_total_municipios_rede = df_agrupado_municipios_rede['qtd_credenciados'].sum()
+valor_total_lote_rede = df_agrupado_lote_rede['qtd_credenciados'].sum()
+
+valor_total_municipios_benefs = df_agrupado_municipios_benefs['Total'].sum()
+valor_total_lote_benefs = df_agrupado_lote_benefs['Total'].sum()
 # valor_total_lote_rede = df_agrupado_lote_rede['mun_upp'].count()
 # valor_total_regiao_rede_formatado = format_currency(valor_total_regiao_rede)
 # valor_total_municipios_rede_formatado = format_currency(valor_total_municipios_rede)
@@ -275,9 +306,11 @@ st.divider()
 col4, col5, col6 = st.columns(3)
 with col4:
     # Exibe a métrica do valor total investido na região
-    st.metric(label="Total de estabelecimentos credenciados na Região de Planejamento", value=valor_total_regiao_rede)
     if regiao:
+        st.metric(label="Total de estabelecimentos credenciados na Região de Planejamento", value=valor_total_regiao_rede)
         st.markdown(f"<b style='color:red'>{regiao}</b>", unsafe_allow_html=True)
+    else:
+        st.metric("Total de estabelecimentos credenciados", value=df_merge_rede_mun_regiao_lotes['qtd_credenciados'].sum())
 with col5:
     # Exibe a métrica do valor total investido na região
     if not lote:
@@ -303,9 +336,11 @@ st.divider()
 col7, col8, col9 = st.columns(3)
 with col7:
     # Exibe a métrica do valor total investido na região
-    st.metric(label="Total de beneficiários na Região de Planejamento", value=valor_total_regiao_benefs)
     if regiao:
+        st.metric(label="Total de beneficiários na Região de Planejamento", value=valor_total_regiao_benefs)
         st.markdown(f"<b style='color:red'>{regiao}</b>", unsafe_allow_html=True)
+    else:
+        st.metric("Total de beneficiários", value=df_benefs_cartao['Total'].sum())
 with col8:
     # Exibe a métrica do valor total investido na região
     if not lote:

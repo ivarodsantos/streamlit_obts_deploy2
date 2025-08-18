@@ -20,7 +20,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Título principal da aplicação
-st.markdown("# OBTs :clipboard:")
+st.markdown("# Compras efetuadas pelas UGs - Ordem Bancária de Transações(OBTs) :clipboard:")
 st.divider()
 
 # --- Carregamento e Pré-processamento de Dados --- #
@@ -48,8 +48,50 @@ st.divider()
 #         st.stop() # Interrompe a execução do Streamlit
 
 # Carrega os dados e armazena em cache para performance
-df_obts = pd.read_csv('obts_final_2023_maio_2025_3.csv', sep=';')
+# df_obts = pd.read_csv('obts_final_2023_maio_2025_3.csv', sep=';')
+df_obts = pd.read_csv('obts_junho.csv', sep=';')
 df_coops = pd.read_csv('rel_cooperativa_csf_lotes.csv')
+
+# itens_interesse = ['Deslocamento e Logística (combustiveis, locação de veiculos)\n',
+#        'Gêneros Alimentícios ( Proteínas, Carboidratos, Hortaliças, Sódios e Lipídios)',
+#        'Matérial de Higienização e Limpeza \n',
+#        'Embalagens e Descartáveis  (marmita, colher e touca)\n',
+#        'Serviço de preparo de alimento\n',
+#        'Deslocamento e Logistica (combustiveis, locação de veiculos)\n',
+#        'Material de Higienização e Limpeza \n',
+#        'Manutenção de Equipamentos\n',
+#        'Embalagens e Descartáveis  (marmita, colher e touca) \n', 
+#        'Manutenção de equipamentos\n',
+#        'Deslocamento e Logística (combustíveis, locação de veículos)\n',
+#        'Manutenção de Equipamentos',
+#        'Deslocamento e LogÍstica (combustiveis, locação de veiculos)\n',
+#        'Manutenção de Equipamentos \n', 
+#        'Manutenção de equipamentos']
+
+itens_interesse = [
+    'Gêneros Alimentícios ( Proteínas, Carboidratos, Hortaliças, Sódios e Lipídios)',
+    'Deslocamento e Logística (combustíveis, locação de veículos)',
+    'Material de Higienização e Limpeza',
+    'Embalagens e Descartáveis  (marmita, colher e touca)',
+    'Manutenção de Equipamentos'
+]
+
+df_obts.replace({'Gêneros Alimentícios ( Proteínas, Carboidratos, Hortaliças, Sódios e Lipídios) \n': 'Gêneros Alimentícios ( Proteínas, Carboidratos, Hortaliças, Sódios e Lipídios)',
+                                        'Gêneros Alimentícios ( Proteínas, Carboidratos, Hortaliças, Sódios e Lipídios)\n' : 'Gêneros Alimentícios ( Proteínas, Carboidratos, Hortaliças, Sódios e Lipídios)',
+                                        'Deslocamento e Logística (combustiveis, locação de veiculos)\n': 'Deslocamento e Logística (combustíveis, locação de veículos)',
+                                        'Deslocamento e Logistica (combustiveis, locação de veiculos)\n': 'Deslocamento e Logística (combustíveis, locação de veículos)',
+                                        'Deslocamento e Logística (combustíveis, locação de veículos)\n': 'Deslocamento e Logística (combustíveis, locação de veículos)',
+                                        'Deslocamento e LogÍstica (combustiveis, locação de veiculos)\n': 'Deslocamento e Logística (combustíveis, locação de veículos)',
+                                        'Matérial de Higienização e Limpeza \n': 'Material de Higienização e Limpeza',
+                                        'Material de Higienização e Limpeza \n': 'Material de Higienização e Limpeza',
+                                        'Embalagens e Descartáveis  (marmita, colher e touca)\n': 'Embalagens e Descartáveis  (marmita, colher e touca)',
+                                        'Embalagens e Descartáveis  (marmita, colher e touca) \n': 'Embalagens e Descartáveis  (marmita, colher e touca)',
+                                        'Manutenção de Equipamentos\n': 'Manutenção de Equipamentos',
+                                        'Manutenção de equipamentos\n': 'Manutenção de Equipamentos',
+                                        'Manutenção de Equipamentos': 'Manutenção de Equipamentos',
+                                        'Manutenção de Equipamentos \n': 'Manutenção de Equipamentos',
+                                        'Manutenção de equipamentos': 'Manutenção de Equipamentos',
+}, inplace=True)
 
 # Exibe mensagem e interrompe se o DataFrame estiver vazio após o carregamento
 if df_obts.empty:
@@ -102,9 +144,9 @@ st.logo('logo-cesf-e-cegov.png')
 
 # Coleta todas as opções únicas das colunas relevantes para os filtros
 todas_regioes = df_obts['Região de Planejamento'].unique()
-todas_ugs = df_obts['Convenente'].unique()
-todos_items = df_obts['Descrição do Item'].unique()
-todos_municipios = df_obts['Municipio_upp'].unique()
+todas_ugs = df_obts['Orgão'].unique()
+todos_items = df_obts['IPT'].unique()
+todos_municipios = df_obts['mun_upp'].unique()
 todos_lotes = df_obts['Nº LOTE'].unique()
 
 # Filtra e ordena municípios, removendo valores NaN e garantindo que são strings
@@ -171,7 +213,7 @@ if lote:
     df_para_filtros = df_para_filtros[df_para_filtros['Nº LOTE'] == lote]
 
 # Selectbox para Município
-municipios_disponiveis = sorted([m for m in df_para_filtros['Municipio_upp'].unique() if isinstance(m, str) and pd.notna(m)])
+municipios_disponiveis = sorted([m for m in df_para_filtros['mun_upp'].unique() if isinstance(m, str) and pd.notna(m)])
 municipios = st.sidebar.selectbox(
     'Município: ',
     municipios_disponiveis,
@@ -188,10 +230,10 @@ if municipios != st.session_state.municipio_selecionado:
 
 # Filtra o DataFrame para UGs
 if municipios:
-    df_para_filtros = df_para_filtros[df_para_filtros['Municipio_upp'] == municipios]
+    df_para_filtros = df_para_filtros[df_para_filtros['mun_upp'] == municipios]
 
 # Selectbox para UG
-ugs_disponiveis = sorted([ug for ug in df_para_filtros['Convenente'].unique() if isinstance(ug, str) and pd.notna(ug)])
+ugs_disponiveis = sorted([ug for ug in df_para_filtros['Orgão'].unique() if isinstance(ug, str) and pd.notna(ug)])
 ug = st.sidebar.selectbox(
     'Convenente:',
     ugs_disponiveis,
@@ -208,10 +250,10 @@ if ug != st.session_state.ug_selecionada:
 
 # Filtra o DataFrame para Itens
 if ug:
-    df_para_filtros = df_para_filtros[df_para_filtros['Convenente'] == ug]
+    df_para_filtros = df_para_filtros[df_para_filtros['Orgão'] == ug]
 
 # Selectbox para Item
-items_disponiveis = sorted([item for item in df_para_filtros['Descrição do Item'].unique() if isinstance(item, str) and pd.notna(item)])
+items_disponiveis = sorted([item for item in df_para_filtros['IPT'].unique() if isinstance(item, str) and pd.notna(item)])
 item = st.sidebar.selectbox(
     'Item:',
     items_disponiveis,
@@ -228,50 +270,79 @@ if item != st.session_state.item_selecionado:
 
 # DataFrame base para os gráficos, filtrado pelas seleções do usuário
 # Usamos o DataFrame original e aplicamos os filtros em cascata
-df_visualizacao = df_obts.copy()
+df_visualizacao_obts = df_obts.copy()
+df_visualizacao_obts_lote = df_obts.copy()
+df_visualizacao_obts_municipio = df_obts.copy()
 df_visualizacao_coops = df_coops.copy()
 
 if regiao:
-    df_visualizacao = df_visualizacao[df_visualizacao['Região de Planejamento'] == regiao]
+    df_visualizacao_obts = df_visualizacao_obts[df_visualizacao_obts['Região de Planejamento'] == regiao]
     df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['Região de Planejamento'] == regiao]
 if lote:
-    df_visualizacao = df_visualizacao[df_visualizacao['Nº LOTE'] == lote]
+    df_visualizacao_obts_lote = df_visualizacao_obts_lote[df_visualizacao_obts_lote['Nº LOTE'] == lote]
     df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['Nº LOTE'] == lote]
 if municipios:
-    df_visualizacao = df_visualizacao[df_visualizacao['Municipio_upp'] == municipios]
-    df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['Municipio_upp'] == municipios]
+    df_visualizacao_obts_municipio = df_visualizacao_obts_municipio[df_visualizacao_obts_municipio['mun_upp'] == municipios]
+    df_visualizacao_coops = df_visualizacao_coops[df_visualizacao_coops['mun_upp'] == municipios]
 if ug:
-    df_visualizacao = df_visualizacao[df_visualizacao['Convenente'] == ug]
+    df_visualizacao_obts = df_visualizacao_obts[df_visualizacao_obts['Orgão'] == ug]
 if item:
-    df_visualizacao = df_visualizacao[df_visualizacao['Descrição do Item'] == item]
+    df_visualizacao_obts = df_visualizacao_obts[df_visualizacao_obts['IPT'] == item]
 
 # Exibe mensagem se o DataFrame estiver vazio após a filtragem e interrompe a execução
-if df_visualizacao.empty:
+if df_visualizacao_obts.empty:
     st.info("Nenhum dado encontrado para os filtros selecionados. Tente ajustar suas seleções.")
     st.stop()
 
 # --- Métricas e Resumos --- #
 
 # Agrupa por Região e UG para o cálculo do valor total da região selecionada
-df_agrupado_regiao_ug = group_and_format_data(df_visualizacao, ['Região de Planejamento', 'Convenente'])
-df_agrupado_regiao_ug_coops = group_and_format_data(df_visualizacao_coops, ['Região de Planejamento', 'Convenente'])
+df_agrupado_regiao_ug = group_and_format_data(df_visualizacao_obts, ['Região de Planejamento', 'Orgão'])
+df_agrupado_regiao_ug_lote = group_and_format_data(df_visualizacao_obts_lote, ['Nº LOTE'])
+df_agrupado_regiao_ug_lote_municipio = group_and_format_data(df_visualizacao_obts_municipio, ['mun_upp'])
+df_agrupado_regiao_ug_coops = group_and_format_data(df_visualizacao_coops, ['Convenente'])
 
 valor_total_regiao = df_agrupado_regiao_ug['Valor OBT Num'].sum()
+valor_total_regiao_lote = df_agrupado_regiao_ug_lote['Valor OBT Num'].sum()
+valor_total_regiao_lote_municipio = df_agrupado_regiao_ug_lote_municipio['Valor OBT Num'].sum()
 valor_total_regiao_formatado = format_currency(valor_total_regiao)
+valor_total_regiao_lote_formatado = format_currency(valor_total_regiao_lote)
+valor_total_regiao_lote_municipio_formatado = format_currency(valor_total_regiao_lote_municipio)
 valor_total_regiao_coops = df_agrupado_regiao_ug_coops['Valor OBT Num'].sum()
 valor_total_regiao_coops_formatado = format_currency(valor_total_regiao_coops)
 
 # Divide o layout em duas colunas para as métricas
-col1, col2 = st.columns(2)
+label_coop = 'Total de compras em Cooperativas'
+if regiao:
+    label_coop = "Total de compras em Cooperativas na Região de Planejamento"
+if regiao and lote:
+    label_coop = "Total de compras em Cooperativas no Lote"
+if regiao and lote and municipios:
+    label_coop = "Total de compras em Cooperativas no Município"
+                
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     # Exibe a métrica do valor total investido na região
     st.metric(label="Total Investido na Região de Planejamento", value=valor_total_regiao_formatado)
+    if regiao:
+        st.markdown(f"<b style='color:red'>{regiao}</b>", unsafe_allow_html=True)
 with col2:
     # Exibe a métrica do valor total investido na região
-    st.metric(label="Total de compras em Cooperativas na Região de Planejamento", value=valor_total_regiao_coops_formatado)
-
-if regiao:
-    st.markdown(f"<b style='color:red'>{regiao}</b>", unsafe_allow_html=True)
+    if not lote:
+        st.info('Aguardando você escolher um lote', icon="🤔")
+    else:
+        st.metric(label="Total Investido no Lote", value=valor_total_regiao_lote_formatado)
+        st.markdown(f"<b style='color:red'>{lote}</b>", unsafe_allow_html=True)
+with col3:
+    # Exibe a métrica do valor total investido na região
+    if not municipios:
+        st.info('Aguardando você escolher um município', icon="🤔")
+    else:
+        st.metric(label="Total Investido no Município", value=valor_total_regiao_lote_municipio_formatado)
+        st.markdown(f"<b style='color:red'>{municipios}</b>", unsafe_allow_html=True)
+with col2:
+    # Exibe a métrica do valor total investido na região
+    st.metric(label=label_coop, value=valor_total_regiao_coops_formatado)
 st.divider()
 
 # --- Visualizações --- #
@@ -286,9 +357,9 @@ with col3:
     chart_ug_compras = create_altair_bar_chart(
         df_agrupado_regiao_ug,
         x_col="Valor OBT Num",
-        y_col="Convenente",
+        y_col="Orgão",
         title="Compras por Unidade Gestora",
-        tooltip_cols=["Convenente", "Valor OBT"]
+        tooltip_cols=["Orgão", "Valor OBT"]
     )
     st.altair_chart(chart_ug_compras, use_container_width=True)
 
@@ -296,13 +367,13 @@ with col4:
     st.markdown(f"<h5>A UG <b style='color:red'>{ug if ug else 'selecionada'}</b> comprou nos seguintes fornecedores em <b style='color:red'>{regiao if regiao else 'região selecionada'}</b></h5>", unsafe_allow_html=True)
     
     # Agrupa dados por Fornecedor para o gráfico
-    df_agrupado_fornecedor = group_and_format_data(df_visualizacao, ['Região de Planejamento', 'Convenente', 'Fornecedor'])
+    df_agrupado_fornecedor = group_and_format_data(df_visualizacao_obts, ['Região de Planejamento', 'Orgão', 'Fornecedor'])
     
     # Filtra por UG e Região para o gráfico de fornecedores
     # Se UG ou Região não estiverem selecionadas, o DataFrame filtrado será vazio para este gráfico específico
     filtered_fornecedor = df_agrupado_fornecedor[
         (df_agrupado_fornecedor['Região de Planejamento'] == regiao) &
-        (df_agrupado_fornecedor['Convenente'] == ug)
+        (df_agrupado_fornecedor['Orgão'] == ug)
     ] if regiao and ug else pd.DataFrame() # Retorna DataFrame vazio se filtros não selecionados
 
     if filtered_fornecedor.empty:
@@ -326,13 +397,15 @@ st.divider()
 st.markdown(f"<h5>Itens comprados por <b style='color:red'>{ug if ug else 'UG selecionada'}</b> na região <b style='color:red'>{regiao if regiao else 'região selecionada'}</b></h5>", unsafe_allow_html=True)
 
 # Agrupa dados por Item para o gráfico
-df_agrupado_item = group_and_format_data(df_visualizacao, ['Região de Planejamento', 'Convenente', 'Descrição do Item'])
-df_agrupado_item.rename(columns={'Descrição do Item': 'Descrição do Item'}, inplace=True)
+df_agrupado_item = group_and_format_data(df_visualizacao_obts, ['Região de Planejamento', 'Orgão', 'IPT'])
+df_agrupado_item.rename(columns={'IPT': 'Descrição do Item'}, inplace=True)
 
 # Filtra por UG e Região para o gráfico de itens
+# event_item = None
+
 filtered_item = df_agrupado_item[
     (df_agrupado_item['Região de Planejamento'] == regiao) &
-    (df_agrupado_item['Convenente'] == ug)
+    (df_agrupado_item['Orgão'] == ug)
 ] if regiao and ug else pd.DataFrame() # Retorna DataFrame vazio se filtros não selecionados
 
 if filtered_item.empty:
@@ -342,26 +415,66 @@ else:
     agrupado_final_item = (filtered_item.groupby('Descrição do Item')['Valor OBT Num'].sum()
                             .reset_index().sort_values("Valor OBT Num", ascending=False))
 
+    # Cria um seletor para exibir informações ao clicar no gráfico
+    selector_item = alt.selection_point("select_item")
     # Cria o gráfico de barras para Itens Comprados
-    chart_itens_comprados = create_altair_bar_chart(
-        agrupado_final_item,
-        x_col="Valor OBT Num",
-        y_col="Descrição do Item",
-        title="Itens Comprados",
-        tooltip_cols=["Descrição do Item", alt.Tooltip("Valor OBT Num", format=".2f", title="Valor OBT")]
-    )
-    st.altair_chart(chart_itens_comprados, use_container_width=True)
+    # chart_itens_comprados = create_altair_bar_chart(
+    #     agrupado_final_item,
+    #     x_col="Valor OBT Num",
+    #     y_col="Descrição do Item",
+    #     title="Itens Comprados",
+    #     tooltip_cols=["Descrição do Item", alt.Tooltip("Valor OBT Num", format=".2f", title="Valor OBT")]
+    # )
+    # st.altair_chart(chart_itens_comprados, use_container_width=True).add_params(selector_item)
+    chart_itens_comprados = alt.Chart(agrupado_final_item)\
+                                                        .mark_bar()\
+                                                        .encode(
+                                                            x=alt.X("Valor OBT Num:Q", title="Valor OBT"),
+                                                            y=alt.Y("Descrição do Item:N", title="Descrição do Item"),
+                                                            tooltip=["Descrição do Item", alt.Tooltip("Valor OBT Num", format=".2f", title="Valor OBT")]
+                                                        )\
+                                                        .add_params(selector_item)
+    event_item = st.altair_chart(chart_itens_comprados, key="chart_item", on_select="rerun")
+    # Mostrar informações diferentes para cada gráfico
+    # if event_item and event_item.selection and event_item.selection.selector_item:
+    @st.dialog("Detalhes do Item")
+    def dialog_item(item):
+        st.write("Item Selecionado:", item)
+        df = df_obts.copy()
+        df_filtered = df[df['IPT']==item]
+        valor_total = df_filtered['Valor OBT'].sum()
+        valor_formatado = f"R$ {valor_total:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        st.write("Valor Total Comprado:", valor_formatado)
+        df_filtered_agrupado_regiao = df_filtered.groupby('Região de Planejamento')['Valor OBT'].sum().reset_index().sort_values('Valor OBT', ascending=False)
+        df_filtered_agrupado_regiao['Valor Obt Formatado'] = df_filtered_agrupado_regiao['Valor OBT'].apply(lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        
+        chart_item_detalhe = create_altair_bar_chart(
+            df_filtered_agrupado_regiao,
+            x_col="Valor OBT",
+            y_col="Região de Planejamento",
+            title="Compras por Região",
+            tooltip_cols=[
+                # alt.Tooltip("Fornecedor:N", title="Nome do Fornecedor"),
+                alt.Tooltip("Valor Obt Formatado:N", title="Valor Investido")
+            ]
+        )
+        st.altair_chart(chart_item_detalhe, use_container_width=True)
+    if event_item.selection.select_item:
+        # print(f'Event_Item: {event_item}\n Event_Item_Selection: {event_item.selection}')
+        dialog_item(event_item['selection']['select_item'][0]['Descrição do Item'])
+        # st.write("Informações do gráfico 1:", event_item.selection.selector_item)
+
 
 st.markdown(f"<h5>Fornecedores de <b style='color:red'>{item if item else 'item selecionado'}</b> comprado por <b style='color:red'>{ug if ug else 'UG selecionada'}</b> na região <b style='color:red'>{regiao if regiao else 'região selecionada'}</b></h5>", unsafe_allow_html=True)
 
 # Agrupa dados por Fornecedor e Item para a tabela
-df_agrupado_fornecedor_item = group_and_format_data(df_visualizacao, ['Região de Planejamento', 'Convenente', 'Fornecedor', 'Descrição do Item'])
-df_agrupado_fornecedor_item.rename(columns={'Descrição do Item': 'Descrição do Item'}, inplace=True)
+df_agrupado_fornecedor_item = group_and_format_data(df_visualizacao_obts, ['Região de Planejamento', 'Orgão', 'Fornecedor', 'IPT'])
+df_agrupado_fornecedor_item.rename(columns={'IPT': 'Descrição do Item'}, inplace=True)
 
 # Filtra por Região, UG e Item para a tabela de fornecedores por item
 filtered_fornecedor_item = df_agrupado_fornecedor_item[
     (df_agrupado_fornecedor_item['Região de Planejamento'] == regiao) &
-    (df_agrupado_fornecedor_item['Convenente'] == ug) &
+    (df_agrupado_fornecedor_item['Orgão'] == ug) &
     (df_agrupado_fornecedor_item['Descrição do Item'] == item)
 ] if regiao and ug and item else pd.DataFrame() # Retorna DataFrame vazio se filtros não selecionados
 
