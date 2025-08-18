@@ -262,6 +262,8 @@ item = st.sidebar.selectbox(
     key='item_filtro'
 )
 
+st.sidebar.text('Fonte: E-Parcerias - Junho/2025')
+
 # Atualiza o estado da sessão se o item mudar
 if item != st.session_state.item_selecionado:
     st.session_state.item_selecionado = item

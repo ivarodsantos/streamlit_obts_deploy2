@@ -191,7 +191,7 @@ if municipios != st.session_state.municipio_selecionado:
     st.session_state.municipio_selecionado = municipios
     # st.experimental_rerun()
     
-    
+st.sidebar.text('Fonte: SPS - Julho/2025')    
 
 # --- Lógica de Filtragem Principal para Visualizações --- #
 
